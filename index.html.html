@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Dunia Pecahan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        
+        /* Custom Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(50px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideInBottom {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes zoomIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .animate-fade-in { animation: fadeIn 0.8s ease-out forwards; }
+        .animate-slide-in-right { animation: slideInRight 0.5s ease-out forwards; }
+        .animate-slide-in-bottom { animation: slideInBottom 0.5s ease-out forwards; }
+        .animate-zoom-in { animation: zoomIn 0.3s ease-out forwards; }
+
+        /* 3D Button Press Effect */
+        .btn-3d {
+            transition: all 0.1s;
+        }
+        .btn-3d:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 0px 0 0 transparent !important;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen">
+
+    <div id="app" class="w-full min-h-screen">
+        <!-- Konten akan dimuat di sini oleh JavaScript -->
+    </div>
+
+    <script>
+        // Data Aplikasi dan State Management
+        const state = {
+            currentScreen: 'splash',
+            playerName: '',
+            progress: 10,
+            stars: 10,
+            lab: { num: 1, den: 2 }
+        };
+
+        const Icons = {
+            Pizza: '🍕', Chocolate: '🍫', Star: '⭐', Trophy: '🏆',
+            Book: '📚', Lab: '🔍', Game: '🎮', Plant: '🌱',
+            Back: '⬅️', Home: '🏠', Scale: '⚖️', Refresh: '🔄',
+            Plus: '➕', Minus: '➖',
+        };
+
+        const menus = [
+            { id: 'dunia1', title: 'Dunia 1 - Mengenal Pecahan', icon: Icons.Pizza, color: 'bg-orange-400', locked: false },
+            { id: 'lab', title: 'Laboratorium Pecahan', icon: Icons.Lab, color: 'bg-cyan-500', locked: false },
+            { id: 'dunia2', title: 'Dunia 2 - Pecahan Senilai', icon: Icons.Chocolate, color: 'bg-amber-600', locked: true },
+            { id: 'dunia3', title: 'Dunia 3 - Membandingkan', icon: Icons.Scale, color: 'bg-pink-500', locked: true },
+            { id: 'dunia4', title: 'Dunia 4 - Mengubah Pecahan', icon: Icons.Refresh, color: 'bg-purple-500', locked: true },
+            { id: 'dunia5', title: 'Dunia 5 - Penjumlahan', icon: Icons.Plus, color: 'bg-blue-500', locked: true },
+            { id: 'dunia6', title: 'Dunia 6 - Pengurangan', icon: Icons.Minus, color: 'bg-red-500', locked: true },
+            { id: 'soal', title: 'Dunia 7 - Soal Cerita', icon: Icons.Book, color: 'bg-teal-500', locked: true },
+            { id: 'master', title: 'Dunia 8 - Misi Master', icon: Icons.Trophy, color: 'bg-yellow-500', locked: true },
+        ];
+
+        // Fungsi pembantu untuk merender visualisasi pecahan (Pizza)
+        function renderPizzaFraction(numerator, denominator, sizeClass = 'w-32 h-32') {
+            const percentage = (numerator / denominator) * 100;
+            let slicesHTML = '';
+            
+            for (let i = 0; i < denominator; i++) {
+                const rotation = (360 / denominator) * i;
+                slicesHTML += `
+                    <div class="absolute w-full h-full pointer-events-none" style="transform: rotate(${rotation}deg)">
+                        <div class="w-1/2 h-full border-r-2 border-white/80 mx-auto"></div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="relative ${sizeClass} rounded-full border-4 border-yellow-500 overflow-hidden shadow-lg shadow-orange-200 bg-gray-100 flex items-center justify-center">
+                    <div class="absolute w-full h-full transition-all duration-700 ease-in-out" 
+                         style="background: conic-gradient(#f59e0b ${percentage}%, transparent ${percentage}% 100%)">
+                    </div>
+                    ${slicesHTML}
+                </div>
+            `;
+        }
+
+        // SCREEN: Splash Screen
+        function renderSplashScreen() {
+            return `
+                <div class="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-sky-300 to-blue-500 text-white p-6 text-center animate-fade-in">
+                    <div class="relative mb-8">
+                        <div class="absolute -top-10 -left-10 text-6xl animate-bounce" style="animation-delay: 0s">${Icons.Pizza}</div>
+                        <div class="absolute -bottom-10 -right-10 text-6xl animate-bounce" style="animation-delay: 0.2s">${Icons.Chocolate}</div>
+                        <div class="absolute top-10 -right-12 text-5xl animate-pulse text-yellow-300 font-bold">¾</div>
+                        <div class="absolute bottom-10 -left-12 text-5xl animate-pulse text-pink-300 font-bold">½</div>
+                        <img 
+                            src="https://placehold.co/300x300/4ade80/ffffff?text=PETUALANG+PECAHAN" 
+                            alt="Ilustrasi Petualangan" 
+                            class="rounded-full border-8 border-white shadow-2xl w-48 h-48 md:w-64 md:h-64 object-cover"
+                            onerror="this.src='https://placehold.co/300x300/4ade80/ffffff?text=GAMBAR'"
+                        />
+                    </div>
+                    
+                    <h1 class="text-4xl md:text-6xl font-extrabold mb-4 drop-shadow-md text-yellow-300">
+                        PETUALANGAN <br/> DUNIA PECAHAN
+                    </h1>
+                    <h2 class="text-xl md:text-2xl font-medium mb-10 drop-shadow-sm italic bg-black/20 py-2 px-6 rounded-full">
+                        “Temukan, Pahami, dan Taklukkan Pecahan!”
+                    </h2>
+                    
+                    <button onclick="navigateTo('nameInput')" class="btn-3d bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold text-2xl py-4 px-10 rounded-full shadow-[0_8px_0_rgb(202,138,4)] hover:shadow-[0_6px_0_rgb(202,138,4)]">
+                        MULAI PETUALANGAN
+                    </button>
+                </div>
+            `;
+        }
+
+        // SCREEN: Name Input
+        function renderNameInputScreen() {
+            setTimeout(() => {
+                const input = document.getElementById('playerNameInput');
+                if(input) input.focus();
+            }, 100);
+
+            return `
+                <div class="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-green-300 to-emerald-500 text-white p-6 text-center animate-slide-in-right">
+                    <div class="bg-white/20 p-8 rounded-3xl backdrop-blur-sm border border-white/40 shadow-2xl max-w-md w-full">
+                        <h2 class="text-3xl font-bold mb-6 drop-shadow-md">
+                            Siapa nama Petualang Pecahan hari ini?
+                        </h2>
+                        <form onsubmit="handleNameSubmit(event)" class="flex flex-col gap-6">
+                            <input 
+                                type="text" 
+                                id="playerNameInput"
+                                placeholder="Ketik namamu di sini..." 
+                                class="text-2xl text-center text-slate-800 py-4 px-6 rounded-2xl border-4 border-yellow-400 focus:outline-none focus:border-yellow-300 shadow-inner"
+                                maxlength="15"
+                                required
+                            />
+                            <button type="submit" class="btn-3d bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold text-2xl py-4 px-10 rounded-full shadow-[0_8px_0_rgb(202,138,4)]">
+                                MULAI
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        // SCREEN: Dashboard
+        function renderDashboardScreen() {
+            let menuHTML = '';
+            menus.forEach(menu => {
+                const isLocked = menu.locked;
+                const baseClasses = "relative overflow-hidden group flex flex-col items-center p-6 rounded-3xl shadow-lg transition-all ";
+                const stateClasses = isLocked 
+                    ? "bg-gray-200 cursor-not-allowed opacity-80" 
+                    : `${menu.color} hover:-translate-y-2 hover:shadow-xl cursor-pointer`;
+                
+                const iconContent = isLocked ? '🔒' : menu.icon;
+                const titleColor = isLocked ? 'text-gray-500' : 'text-white drop-shadow-sm';
+                const clickHandler = isLocked ? "" : `onclick="navigateTo('${menu.id}')"`;
+
+                menuHTML += `
+                    <button ${clickHandler} class="${baseClasses} ${stateClasses}">
+                        <div class="text-5xl mb-4 bg-white/20 w-20 h-20 rounded-full flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+                            ${iconContent}
+                        </div>
+                        <h4 class="text-lg font-bold text-center ${titleColor}">
+                            ${menu.title}
+                        </h4>
+                        ${isLocked ? '<p class="text-xs text-gray-500 mt-2 font-medium">Selesaikan dunia sebelumnya</p>' : ''}
+                        ${!isLocked ? '<div class="absolute inset-0 border-4 border-white/20 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>' : ''}
+                    </button>
+                `;
+            });
+
+            return `
+                <div class="min-h-screen bg-sky-50 pb-20 animate-fade-in">
+                    <!-- Header Profile -->
+                    <div class="bg-blue-600 text-white p-6 rounded-b-3xl shadow-lg relative overflow-hidden">
+                        <div class="absolute top-0 right-0 opacity-10 text-9xl transform translate-x-1/4 -translate-y-1/4">${Icons.Home}</div>
+                        <div class="relative z-10 flex flex-col md:flex-row justify-between items-center gap-4 max-w-4xl mx-auto">
+                            <div>
+                                <h2 class="text-3xl font-bold mb-1 text-yellow-300">Halo, <span class="capitalize">${state.playerName}</span>!</h2>
+                                <p class="text-lg">Siap menjelajahi Dunia Pecahan?</p>
+                            </div>
+                            <div class="flex items-center gap-4 bg-black/20 p-3 rounded-2xl border border-white/20">
+                                <div class="text-center">
+                                    <p class="text-xs font-bold uppercase tracking-wider text-blue-200">Progres</p>
+                                    <p class="text-xl font-bold">${state.progress}%</p>
+                                </div>
+                                <div class="w-px h-8 bg-white/30"></div>
+                                <div class="text-center">
+                                    <p class="text-xs font-bold uppercase tracking-wider text-blue-200">Bintang</p>
+                                    <p class="text-xl font-bold">${Icons.Star} ${state.stars}</p>
+                                </div>
+                                <div class="w-px h-8 bg-white/30"></div>
+                                <div class="text-center flex flex-col items-center justify-center">
+                                    <p class="text-xs font-bold uppercase tracking-wider text-blue-200">Pangkat</p>
+                                    <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold mt-1 flex items-center gap-1 shadow-sm">
+                                        ${Icons.Plant} Pemula
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Menu Grid -->
+                    <div class="max-w-4xl mx-auto mt-8 px-4">
+                        <h3 class="text-xl font-bold text-slate-700 mb-6 flex items-center gap-2">
+                            ${Icons.Game} Pilih Destinasi Petualanganmu!
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            ${menuHTML}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // SCREEN: Dunia 1
+        function renderDunia1Screen() {
+            const examples = [
+                { num: 1, den: 2 }, { num: 1, den: 3 }, { num: 2, den: 3 },
+                { num: 3, den: 4 }, { num: 1, den: 4 }, { num: 5, den: 8 }
+            ];
+
+            let galleryHTML = '';
+            examples.forEach(ex => {
+                galleryHTML += `
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border-2 border-slate-100 flex flex-col items-center hover:shadow-md hover:border-orange-300 transition-all group">
+                        ${renderPizzaFraction(ex.num, ex.den, 'w-20 h-20 md:w-24 md:h-24')}
+                        <div class="mt-4 bg-orange-100 px-4 py-2 rounded-xl group-hover:bg-orange-400 group-hover:text-white transition-colors">
+                            <span class="text-xl font-bold">${ex.num} / ${ex.den}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            return `
+                <div class="min-h-screen bg-orange-50 pb-20 animate-slide-in-bottom">
+                    <!-- Header -->
+                    <div class="bg-orange-500 text-white p-4 sticky top-0 z-50 shadow-md flex items-center gap-4">
+                        <button onclick="navigateTo('dashboard')" class="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors flex items-center justify-center">
+                            ${Icons.Back}
+                        </button>
+                        <h2 class="text-xl font-bold">Dunia 1 - Mengenal Pecahan</h2>
+                    </div>
+
+                    <div class="max-w-3xl mx-auto p-4 mt-6">
+                        <!-- Intro Card -->
+                        <div class="bg-white rounded-3xl p-6 shadow-xl border-4 border-orange-200 text-center mb-8 relative mt-8">
+                            <div class="absolute -top-10 left-1/2 -translate-x-1/2 text-5xl bg-orange-100 rounded-full p-3 shadow-sm border-2 border-orange-300">
+                                ${Icons.Pizza}
+                            </div>
+                            <h3 class="text-2xl font-bold text-slate-800 mt-6 mb-4">Apa itu Pecahan?</h3>
+                            <p class="text-lg text-slate-600 leading-relaxed">
+                                Bayangkan kamu punya satu pizza utuh, lalu membaginya kepada teman-temanmu.
+                                Nah, <strong>bagian-bagian dari pizza utuh</strong> itulah yang kita sebut dengan pecahan!
+                            </p>
+                        </div>
+
+                        <!-- Interactive Card -->
+                        <div class="bg-blue-100 rounded-3xl p-6 shadow-xl border-4 border-blue-300 mb-8 flex flex-col items-center">
+                            <h3 class="text-xl font-bold text-blue-900 mb-6 text-center">
+                                Ayo Kenali Bagian Pecahan! <br/> <span class="text-sm font-normal text-blue-700">(Tekan kotaknya ya!)</span>
+                            </h3>
+                            
+                            <div class="flex flex-col md:flex-row items-center gap-10">
+                                ${renderPizzaFraction(3, 4, 'w-40 h-40 md:w-48 md:h-48')}
+
+                                <div class="flex items-center gap-4 bg-white p-6 rounded-3xl shadow-md border-2 border-blue-200">
+                                    <div class="flex flex-col items-center gap-2 relative">
+                                        <button onclick="handleDunia1Info('pembilang')" id="btn-pembilang" class="btn-3d text-4xl font-extrabold w-20 h-20 flex items-center justify-center rounded-2xl bg-green-100 text-green-700 hover:bg-green-200 shadow-md">
+                                            3
+                                        </button>
+                                        <div class="w-24 h-2 bg-slate-800 rounded-full"></div>
+                                        <button onclick="handleDunia1Info('penyebut')" id="btn-penyebut" class="btn-3d text-4xl font-extrabold w-20 h-20 flex items-center justify-center rounded-2xl bg-rose-100 text-rose-700 hover:bg-rose-200 shadow-md">
+                                            4
+                                        </button>
+                                    </div>
+
+                                    <div id="dunia1-info-panel" class="w-64 h-48 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden text-center transition-all">
+                                        <p class="text-slate-500 font-medium italic animate-pulse">
+                                            Tekan angka 3 atau 4 di sebelah kiri untuk melihat rahasianya!
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gallery -->
+                        <h3 class="text-2xl font-bold text-center text-slate-700 mb-6 border-b-2 border-orange-200 pb-2 mx-auto">Galeri Pecahan</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            ${galleryHTML}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Logika untuk menampilkan informasi pembilang/penyebut di Dunia 1
+        function handleDunia1Info(type) {
+            const panel = document.getElementById('dunia1-info-panel');
+            const btnPembilang = document.getElementById('btn-pembilang');
+            const btnPenyebut = document.getElementById('btn-penyebut');
+
+            // Reset styles
+            btnPembilang.className = "btn-3d text-4xl font-extrabold w-20 h-20 flex items-center justify-center rounded-2xl bg-green-100 text-green-700 hover:bg-green-200 shadow-md transition-all";
+            btnPenyebut.className = "btn-3d text-4xl font-extrabold w-20 h-20 flex items-center justify-center rounded-2xl bg-rose-100 text-rose-700 hover:bg-rose-200 shadow-md transition-all";
+
+            if (type === 'pembilang') {
+                btnPembilang.classList.replace('bg-green-100', 'bg-green-400');
+                btnPembilang.classList.replace('text-green-700', 'text-white');
+                btnPembilang.classList.replace('hover:bg-green-200', 'hover:bg-green-500');
+                panel.innerHTML = `
+                    <div class="animate-zoom-in">
+                        <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-bold mb-2 inline-block">PEMBILANG (Atas)</span>
+                        <p class="text-slate-700 text-sm md:text-base font-medium">
+                            Angka <strong>3</strong> disebut pembilang.<br/><br/>
+                            Menunjukkan banyak bagian yang <strong>diambil</strong> atau diperhatikan.
+                        </p>
+                    </div>
+                `;
+            } else if (type === 'penyebut') {
+                btnPenyebut.classList.replace('bg-rose-100', 'bg-rose-400');
+                btnPenyebut.classList.replace('text-rose-700', 'text-white');
+                btnPenyebut.classList.replace('hover:bg-rose-200', 'hover:bg-rose-500');
+                panel.innerHTML = `
+                    <div class="animate-zoom-in">
+                        <span class="bg-rose-500 text-white px-3 py-1 rounded-full text-sm font-bold mb-2 inline-block">PENYEBUT (Bawah)</span>
+                        <p class="text-slate-700 text-sm md:text-base font-medium">
+                            Angka <strong>4</strong> disebut penyebut.<br/><br/>
+                            Menunjukkan jumlah <strong>seluruh bagian</strong> yang sama besar.
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        // SCREEN: Laboratorium Pecahan
+        function renderLabScreen() {
+            // Gunakan nilai state saat ini
+            const num = state.lab.num;
+            const den = state.lab.den;
+
+            return `
+                <div class="min-h-screen bg-cyan-50 pb-20 animate-slide-in-right">
+                    <!-- Header -->
+                    <div class="bg-cyan-500 text-white p-4 sticky top-0 z-50 shadow-md flex items-center gap-4">
+                        <button onclick="navigateTo('dashboard')" class="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors flex items-center justify-center">
+                            ${Icons.Back}
+                        </button>
+                        <h2 class="text-xl font-bold flex items-center gap-2">${Icons.Lab} Laboratorium Pecahan</h2>
+                    </div>
+
+                    <div class="max-w-2xl mx-auto p-4 mt-6">
+                        <div class="bg-white rounded-3xl p-6 md:p-10 shadow-xl border-4 border-cyan-200 text-center">
+                            <h3 class="text-2xl font-bold text-slate-800 mb-2">Mesin Pembuat Pecahan</h3>
+                            <p class="text-slate-600 mb-8">Ubah angka pembilang dan penyebut di bawah ini untuk melihat perubahannya pada pizza!</p>
+
+                            <!-- Dynamic Pizza Container -->
+                            <div id="lab-pizza-container" class="flex justify-center mb-10">
+                                ${renderPizzaFraction(num, den, 'w-48 h-48 md:w-64 md:h-64')}
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <!-- Pembilang Control -->
+                                <div class="bg-green-50 p-6 rounded-3xl border-2 border-green-200 flex flex-col items-center shadow-inner">
+                                    <p class="text-green-700 font-bold mb-4 uppercase text-sm">Pembilang (Diwarnai)</p>
+                                    <div class="flex items-center gap-4">
+                                        <button onclick="updateLab('num', -1)" class="btn-3d w-12 h-12 bg-white text-green-600 rounded-full text-2xl font-bold shadow-md hover:bg-green-100 border-2 border-green-200">
+                                            -
+                                        </button>
+                                        <div id="lab-num-text" class="w-16 text-center text-4xl font-extrabold text-green-700">${num}</div>
+                                        <button onclick="updateLab('num', 1)" class="btn-3d w-12 h-12 bg-green-500 text-white rounded-full text-2xl font-bold shadow-md hover:bg-green-400">
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Penyebut Control -->
+                                <div class="bg-rose-50 p-6 rounded-3xl border-2 border-rose-200 flex flex-col items-center shadow-inner">
+                                    <p class="text-rose-700 font-bold mb-4 uppercase text-sm">Penyebut (Total Potongan)</p>
+                                    <div class="flex items-center gap-4">
+                                        <button onclick="updateLab('den', -1)" class="btn-3d w-12 h-12 bg-white text-rose-600 rounded-full text-2xl font-bold shadow-md hover:bg-rose-100 border-2 border-rose-200">
+                                            -
+                                        </button>
+                                        <div id="lab-den-text" class="w-16 text-center text-4xl font-extrabold text-rose-700">${den}</div>
+                                        <button onclick="updateLab('den', 1)" class="btn-3d w-12 h-12 bg-rose-500 text-white rounded-full text-2xl font-bold shadow-md hover:bg-rose-400">
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-8 bg-blue-50 text-blue-800 p-4 rounded-xl border border-blue-200 font-medium flex items-center justify-center">
+                                <span id="lab-result-text" class="text-2xl bg-white px-4 py-2 rounded-lg border border-blue-100 mr-3 font-bold shadow-sm">${num}/${den}</span> 
+                                <span id="lab-read-text" class="text-lg">dibaca: <strong>${num} per ${den}</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Fungsi untuk mengupdate angka di Lab Pecahan
+        function updateLab(type, change) {
+            let { num, den } = state.lab;
+
+            if (type === 'num') {
+                const newNum = num + change;
+                if (newNum >= 0 && newNum <= den) {
+                    state.lab.num = newNum;
+                }
+            } else if (type === 'den') {
+                const newDen = den + change;
+                if (newDen >= 1 && newDen <= 12) {
+                    state.lab.den = newDen;
+                    // Pastikan pembilang tidak melebihi penyebut yang baru
+                    if (state.lab.num > newDen) {
+                        state.lab.num = newDen;
+                    }
+                }
+            }
+
+            // Update DOM Elements secara langsung agar lebih ringan daripada re-render semua
+            document.getElementById('lab-num-text').innerText = state.lab.num;
+            document.getElementById('lab-den-text').innerText = state.lab.den;
+            document.getElementById('lab-result-text').innerText = `${state.lab.num}/${state.lab.den}`;
+            document.getElementById('lab-read-text').innerHTML = `dibaca: <strong>${state.lab.num} per ${state.lab.den}</strong>`;
+            
+            // Re-render hanya bagian Pizza
+            const pizzaContainer = document.getElementById('lab-pizza-container');
+            pizzaContainer.innerHTML = renderPizzaFraction(state.lab.num, state.lab.den, 'w-48 h-48 md:w-64 md:h-64');
+        }
+
+        // Handler untuk submit nama
+        function handleNameSubmit(event) {
+            event.preventDefault();
+            const input = document.getElementById('playerNameInput');
+            if (input.value.trim() !== '') {
+                state.playerName = input.value.trim();
+                navigateTo('dashboard');
+            }
+        }
+
+        // Router Utama
+        function navigateTo(screenId) {
+            state.currentScreen = screenId;
+            const app = document.getElementById('app');
+            
+            // Scroll ke atas
+            window.scrollTo(0, 0);
+
+            switch(screenId) {
+                case 'splash':
+                    app.innerHTML = renderSplashScreen();
+                    break;
+                case 'nameInput':
+                    app.innerHTML = renderNameInputScreen();
+                    break;
+                case 'dashboard':
+                    app.innerHTML = renderDashboardScreen();
+                    break;
+                case 'dunia1':
+                    app.innerHTML = renderDunia1Screen();
+                    break;
+                case 'lab':
+                    app.innerHTML = renderLabScreen();
+                    break;
+                default:
+                    app.innerHTML = renderDashboardScreen();
+            }
+        }
+
+        // Inisialisasi Aplikasi saat dimuat
+        window.onload = () => {
+            navigateTo('splash');
+        };
+
+    </script>
+</body>
+</html>
